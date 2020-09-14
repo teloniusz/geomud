@@ -1,0 +1,27 @@
+1. Lokalizacje:
+    - get_location
+      parametry: ID
+
+    - get_location_neighbors
+      parametry: długość, szerokość geogr.
+
+    - get_county
+      parametry: długość, szerokość
+
+    cel: serwer lokalizacji (postgis)
+
+2. Pociągi:
+    - refresh_trains
+      parametry:
+        - nr i nazwa pociągu
+        - najbliższa stacja
+        - opóźnienie
+        - długość i szerokość
+        - powiat
+    cel: kafka
+    - get_news
+      parametry:
+        - powiat
+
+3. Wiki
+    
