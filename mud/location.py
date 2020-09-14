@@ -101,8 +101,7 @@ class Map:
     def location_change(self, client):
         data = self.clients[id(client)]
         self.locserver.get_neighbors(data['client'].location)
-        if data['location'].subkey != data['client'].location.subkey:
-
+#        if data['location'].subkey != data['client'].location.subkey:
 
     def del_client(self, client):
         data = self.clients[id(client)]

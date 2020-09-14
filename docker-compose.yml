@@ -1,0 +1,51 @@
+version: '3'
+services:
+#  camel:
+#    build: camel-router/.
+#    ports:
+#      - "8081:8081"
+#    volumes:
+#      - ./camel-router:/io
+#    networks:
+#      - overlay
+  mud:
+    image: python:3.8
+    ports:
+      - "10023:10023"
+    volumes:
+      - ./mud:/home/mud
+    environment:
+      PYTHONPATH: /home/mud
+    working_dir: /home/mud
+    entrypoint: /home/mud/mud.py
+    networks:
+      - overlay
+
+  locdb:
+    image: kartoza/postgis
+    volumes:
+      - ./locations/sql:/docker-entrypoint-initdb.d
+      - geomud-locations-data:/var/lib/postgresql
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASS: ${POSTGRES_PASS}
+    networks:
+      - overlay
+
+  locserver:
+    image: tiangolo/uwsgi-nginx-flask:python3.8
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASS: ${POSTGRES_PASS}
+      POSTGRES_HOST: locdb
+    volumes:
+      - ./locations:/app
+    networks:
+      - overlay
+
+networks:
+  overlay:
+volumes:
+  geomud-locations-data:
