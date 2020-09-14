@@ -32,10 +32,9 @@ class Trains:
         self.headers.update({'__RequestVerificationToken': self.token})
         self.session.cookies['cookieAgreement'] = 'OK'
 
-    def get_trains(self, province='mazowieckie'):
+    def get_trains(self):
         if not self.token:
             self.load_data()
-        self.session.cookies['WybraneWojewodztwo'] = province
         res = self.session.post(f'{self.MAP_URL}/{self.MAP_REFRESH_URI}',
                                 data={'jezyk': 'PL', '__RequestVerificationToken': self.token},
                                 headers=self.headers)
