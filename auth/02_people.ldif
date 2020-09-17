@@ -1,0 +1,9 @@
+# scott, people, jnp2.mimuw.edu.pl
+dn: cn=scott,ou=people,{{ LDAP_BASE_DN }}
+cn: scott
+givenName: Scott Oraclewski
+objectClass: inetOrgPerson
+objectClass: top
+# tiger
+userPassword:: e1NTSEF9bG1NZkU3eld0Zk1lOG1lWlVaOXlld21ITTQvbGZ6Mk4=
+sn: Scotty

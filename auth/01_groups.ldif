@@ -1,0 +1,6 @@
+# geomud, authentication, group, jnp2.mimuw.edu.pl
+dn: cn=geomud,ou=authentication,ou=group,{{ LDAP_BASE_DN }}
+cn: geomud
+description: GeoMUD auth group
+objectClass: groupOfUniqueNames
+objectClass: top
