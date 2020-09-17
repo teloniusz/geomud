@@ -773,7 +773,7 @@ class TelnetHandlerBase(SocketServer.BaseRequestHandler):
         if not block:
             if not self.inputcooker_socket_ready():
                 return ''
-        ret = self.sock.recv(20).decode('utf-8')
+        ret = self.sock.recv(20).decode('utf-8', errors='replace')
         self.eof = not(ret)
         self.rawq = self.rawq + ret
         if self.eof:

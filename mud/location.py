@@ -1,3 +1,4 @@
+import requests
 from threading import Thread
 import time
 
@@ -43,54 +44,95 @@ class Loc:
         data['idx'] = idx
         DIRS[data['name']] = DIRS[data['short']] = data
 
-    def __init__(self, locid, name, info='', location='', neighbors=None):
-        self.locid = locid
+    def __init__(self, server, loc_id, name, coords=None, county='', province='', neighbors=None):
+        self.server = server
+        self.loc_id = loc_id
         self.name = name
-        self.info = info
-        self.location = location
-        self.neighbors = neighbors or {}
-        self.subkey = self.locid / 3
+        self.coords = coords
+        self.county = county
+        self.province = province
+        self.neighbors = neighbors
+        self.last_update = time.time()
 
     def add_neighbor(self, neighbor, direction):
         self.neighbors[self.DIRS[direction]['name']] = neighbor
         neighbor.neighbors[self.DIRDATA[(self.DIRS[direction]['idx'] + 8) % 16]['name']] = self
 
+    def get_neighbors(self):
+        if not self.neighbors or time.time() - self.last_update > 3600:
+            self.neighbors = self.server.get_neighbors(self)
+        return self.neighbors
 
 
 class LocationServer:
-    def __init__(self):
-        self.locations = {
-            1: Loc(1, 'Warszawa'),
-            2: Loc(2, 'Legionowo'),
-            3: Loc(3, 'Piaseczno'),
-            4: Loc(4, 'Piastów'),
-            5: Loc(5, 'Łomianki'),
-            6: Loc(6, 'Ożarów Maz'),
-            7: Loc(7, 'Józefów')
-        }
-        self.locations[1].add_neighbor(self.locations[2], 'n')
-        self.locations[1].add_neighbor(self.locations[3], 's')
-        self.locations[1].add_neighbor(self.locations[4], 'wsw')
-        self.locations[1].add_neighbor(self.locations[5], 'nnw')
-        self.locations[1].add_neighbor(self.locations[6], 'w')
-        self.locations[1].add_neighbor(self.locations[7], 'sse')
-        self.locations[2].add_neighbor(self.locations[5], 'w')
+    INIT_LOC = 'Piątek'
+
+    def __init__(self, url):
+        # todo: zaimplementować LRU cache
+        self.locations = {}
+        self.url = url
+        self.session = requests.session()
+        res = self.call_camel(self.INIT_LOC, 'location')
+        self.update_data(res['lau_code'])
+        self.initial = res['lau_code']
+
+    def authenticate(self, username, passwd):
+        return self.session.post(f'{self.url}/auth', json={"user": username, "passwd": passwd}).json()
+
+    def call_camel(self, name, what):
+        try:
+            res = self.session.get(f'{self.url}/places/{name}/{what}')
+            return res.json()
+        except Exception as ex:
+            print(f"Communication error: {res}")
 
     def get_neighbors(self, location):
-        return location.neighbors
+        res = self.call_camel(location.loc_id, 'neighbors')
+        return {
+            Loc.DIRS[direction]['name']: self.locations.setdefault(
+                neigh['lau_code'],
+                Loc(self, neigh['lau_code'], neigh['name']))
+            for direction, neigh in res.items()
+            if direction in Loc.DIRS
+        }
+
+    def update_data(self, loc_id):
+        loc = self.locations.get(loc_id)
+        if not loc or not loc.coords:
+            res = self.call_camel(loc_id, 'location')
+            if not res:
+                return
+            if not loc:
+                loc = Loc(self, res['lau_code'], res['name'], res['loc']['coordinates'],
+                          res['county'], res['province'])
+            else:
+                loc.coords = res['loc']['coordinates']
+                loc.county = res.get('county')
+                loc.province = res.get('province')
+
+        loc.neighbors = self.get_neighbors(loc)
+        self.locations[loc_id] = loc
 
 
 class Map:
     def __init__(self, url):
         self.url = url
         self.clients = {}
-        self.locserver = LocationServer()
-        self.start_location = self.locserver.locations[1]
+        self.client_idx = {}
+        self.locserver = LocationServer(self.url)
+        self.start_location = self.locserver.locations[self.locserver.initial]
 
         self.talker = Thread(target=self.handle_talk, daemon=True)
         self.talker.start()
 
+    def authenticate(self, user, passwd):
+        return self.locserver.authenticate(user, passwd)
+
     def add_client(self, client):
+        if not hasattr(client, 'username'):
+            client.username = ''
+        if not hasattr(client, 'location'):
+            client.location = self.start_location
         self.clients[id(client)] = {
             'start': time.time(),
             'last': time.time(),
@@ -98,15 +140,30 @@ class Map:
             'location': client.location
         }
 
-    def location_change(self, client):
+    def location_change(self, client, new_location):
+        self.locserver.update_data(new_location.loc_id)
         data = self.clients[id(client)]
-        self.locserver.get_neighbors(data['client'].location)
-#        if data['location'].subkey != data['client'].location.subkey:
+        if data['location'].province != new_location.province:
+            data['client'].writeresponse(f"You left province: {data['location'].province} and arrived to {new_location.province}")
+        if data['location'].county != new_location.county:
+            data['client'].writeresponse(f"You left county: {data['location'].county} and arrived to {new_location.county}")
+        data['location'] = new_location
 
     def del_client(self, client):
         data = self.clients[id(client)]
         data['client'].writeresponse(f"\nFarewell - we've been together for {time.time() - data['start']} seconds")
         del self.clients[id(client)]
+
+    def get_info(self, location, by_coords=False):
+        if by_coords:
+            srch_key = f'{location.coords[0]},{location.coords[1]},{location.name}'
+        else:
+            srch_key = location.name
+        res = self.locserver.call_camel(srch_key, 'info')
+        try:
+            return res['query']['pages']
+        except (KeyError, TypeError):
+            return {}
 
     def handle_talk(self):
         while True:
@@ -114,5 +171,5 @@ class Map:
             now = time.time()
             for client in self.clients.values():
                 if now - client['last'] > 60:
-                    client['client'].writeresponse(f"\nA minute passed again")
+                    client['client'].writeresponse(f"\nA minute passed again, total: {(now - client['start'])/60} mins")
                     client['last'] = now
