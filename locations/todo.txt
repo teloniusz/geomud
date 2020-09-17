@@ -1,9 +1,0 @@
-docker run -it --rm kartoza/postgis
-
-https://gisco-services.ec.europa.eu/distribution/v2/lau/
-https://gisco-services.ec.europa.eu/distribution/v2/lau/lau-2019-files.html
-https://gisco-services.ec.europa.eu/distribution/v2/lau/lau-2019-files.json
-https://gisco-services.ec.europa.eu/distribution/v2/lau/geojson/LAU_RG_01M_2019_3035.geojson
-https://gisco-services.ec.europa.eu/distribution/v2/lau/geojson/LAU_RG_01M_2019_4326.geojson
-
-
