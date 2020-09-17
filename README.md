@@ -14,33 +14,33 @@ Główny katalog:
 
 ## Korzystanie
 
-#. Aplikacja:
+1. Aplikacja:
    ```telnet localhost 10023```
-    (patrz też: dokumentacja w podkatalogu `mud/`)
-#. Zarządzanie użytkownikami: `https://localhost:10443`
+   (patrz też: dokumentacja w podkatalogu `mud/`)
+2. Zarządzanie użytkownikami: `https://localhost:10443`
    (należy się spodziewać nieprawidłowego certyfikatu)
 
 ## Opis serwisów
 
-#. Główny serwis - MUD
+1. Główny serwis - `mud`
+   Multi User Dungeon - serwer telnet, który pozwala logującemu się chodzić
+   po rzeczywistych lokacjach pobranych z publicznych baz (dane w repozytorium
+   ograniczają lokacje do Polski). Dla lokacji można też pobrać informacje z wiki.
 
-Multi User Dungeon - serwer telnet, który pozwala logującemu się chodzić
-po rzeczywistych lokacjach pobranych z publicznych baz (dane w repozytorium
-ograniczają lokacje do Polski). Dla lokacji można też pobrać informacje z wiki.
-
-Aplikacja MUD używa serwisu Camel-Router jako backendu (routing komunikatów JSON),
-również do autoryzacji.
-
-#. Camel router
+   Aplikacja MUD używa serwisu Camel-Router jako backendu (routing komunikatów JSON),
+   również do autoryzacji.
+2. `camel-router`
    Zapewnia routing i tłumaczenie komunikatów między pozostałymi serwisami i MUD.
-#. Authserver
+3. `authserver`
    Serwer OpenLDAP odpowiadający za użytkowników
-#. LocDB
+4. `authadmin`
+   Usługa PHPLdapAdmin do zarządzania serwerem OpenLDAP
+5. `locdb`
    Serwer PostGIS (Postgresql z rozszerzeniem GIS) odpowiadający za backend geolokalizacji - granice
    jednostek administracyjnych, położenie geograficzne i kierunki.
-#. Locserver
+6. `locserver`
    Aplikacja REST (python + Flask) serwująca dane z LocDB.
-#. Wiki
+7. `wiki`
    Aplikacja REST (python + Flask) serwująca dane z Wikipedii przez publiczne API
 
 Domyślnie zestaw serwuje usługi na dwóch portach:
