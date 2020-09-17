@@ -1,23 +1,40 @@
 version: '3'
 services:
-#  camel:
-#    build: camel-router/.
-#    ports:
-#      - "8081:8081"
-#    volumes:
-#      - ./camel-router:/io
-#    networks:
-#      - overlay
+  authserver:
+    image: osixia/openldap:1.4.0
+    command: ['--copy-service']
+    environment:
+      LDAP_ORGANISATION: GeoMUD
+      LDAP_DOMAIN: jnp2.mimuw.edu.pl
+      LDAP_ADMIN_PASSWORD: 'you?know?nothing...'
+    volumes:
+      - ./auth:/container/service/slapd/assets/config/bootstrap/ldif/custom
+    networks:
+      - overlay
+
+  authadmin:
+    image: osixia/phpldapadmin:0.9.0
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: authserver
+    ports:
+      - "10443:443"
+    networks:
+      - overlay
+
+  camel:
+    build: camel-router/.
+    volumes:
+      - ./camel-router:/io
+    networks:
+      - overlay
+
   mud:
-    image: python:3.8
+    build: ./mud
     ports:
       - "10023:10023"
+    command: ['camel:8082']
     volumes:
       - ./mud:/home/mud
-    environment:
-      PYTHONPATH: /home/mud
-    working_dir: /home/mud
-    entrypoint: /home/mud/mud.py
     networks:
       - overlay
 
@@ -42,6 +59,13 @@ services:
       POSTGRES_HOST: locdb
     volumes:
       - ./locations:/app
+    networks:
+      - overlay
+
+  wiki:
+    image: tiangolo/uwsgi-nginx-flask:python3.8
+    volumes:
+      - ./wiki:/app
     networks:
       - overlay
 
