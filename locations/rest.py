@@ -2,27 +2,39 @@ import os
 import time
 from flask import Flask
 from flask_restful import Resource, Api
-from sqlalchemy import create_engine
+
+from model import LocBackend
 
 
-class Locations(Resource):
-    def get(self):
-        query = db.execute('SELECT * FROM clients')
-        return {'clients': [dict(zip(tuple(query.keys()), str(i))) for i in query.cursor]}
+class Location(Resource):
+    def get(self, name=None, loc_id=None):
+        try:
+            return next(LocBackend.instance().get_place(name=name, lau_code=loc_id, county=True))
+        except StopIteration:
+            return None
+
+
+class Neighbors(Resource):
+    def get(self, loc_id=None, name=None):
+        return LocBackend.instance().get_neighbors(name=name, lau_code=loc_id)
+
+
+class County(Resource):
+    def get(self, longitude, latitude):
+        return LocBackend.instance().get_county([longitude, latitude])
 
 
 def create_app():
     app = Flask(__name__)
     api = Api(app)
-    pg_user, pg_pass, pg_host, pg_db = (
-        os.environ[key]
-        for key in ('POSTGRES_USER', 'POSTGRES_PASS', 'POSTGRES_DB', 'POSTGRES_HOST'))
-    db_connect = create_engine(f'postgresql://{pg_user}:{pg_pass}@{pg_host}/{pg_db}')
-    db = db_connect.connect()
-# https://www.codementor.io/@sagaragarwal94/building-a-basic-restful-api-in-python-58k02xsiq
-    api.add_resource(Locations, '/location/')
+    pg_user, pg_pass, pg_db, pg_host = (
+        os.environ[f'POSTGRES_{key}']
+        for key in ('USER', 'PASS', 'DB', 'HOST'))
+    LocBackend.connect_string = f'postgresql://{pg_user}:{pg_pass}@{pg_host}/{pg_db}'
+    api.add_resource(Location, '/location/<string:name>', '/location/<int:loc_id>')
+    api.add_resource(Neighbors, '/neighbors/<string:name>', '/neighbors/<int:loc_id>')
+    api.add_resource(County, '/county/<float:longitude>,<float:latitude>')
+    return app
 
-    return app, db
 
-
-app, db = create_app()
+app = create_app()
