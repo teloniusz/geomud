@@ -4,3 +4,4 @@ cn: geomud
 description: GeoMUD auth group
 objectClass: groupOfUniqueNames
 objectClass: top
+uniqueMember: cn=dummy

@@ -2,3 +2,8 @@ dn: cn=geomud,ou=authentication,ou=group,{{ LDAP_BASE_DN }}
 changeType: modify
 add: uniqueMember
 uniqueMember: cn=scott,ou=people,{{ LDAP_BASE_DN }}
+
+dn: cn=geomud,ou=authentication,ou=group,{{ LDAP_BASE_DN }}
+changeType: modify
+delete: uniqueMember
+uniqueMember: cn=dummy

@@ -1,26 +1,43 @@
-### GeoMUD - aplikacja do chodzenia po mapie
+## GeoMUD - aplikacja do chodzenia po mapie
 
 W podkatalogach można znaleźć opisy komponentów.
 
 Główny katalog:
 
  * `compose.sh` - skrypt zastępujący uruchomienie `docker-compose` (wrapper). Przyjmuje te same
-   argumenty, tworzy plik `.env`, jeśli go nie ma, zawierający losowe hasło do bazy PostGIS.
+   argumenty, tworzy plik `.env`, jeśli go nie ma, zawierający losowe hasło do bazy PostGIS,
+   skompiluje serwis *camel-router*, jeśli nie jest od razu skompilowany.
  * `docker-compose.yml` - specyfikacja serwisów.
 
-## Uruchomienie
+### Wymagania
+
+1. docker-compose i działający demon docker
+
+2. Opcjonalnie: gradle (w miejscu wskazanym zmienną `$GRADLE_HOME`).
+   Jeśli gradle nie będzie dostępne, skrypt `compose.sh` postara się go ściągnąć
+   do katalogu tymczasowego, w celu użycia do kompilacji komponentu *camel-router*.
+
+### Uruchomienie
 
 ```./compose.sh up -d```
 
-## Korzystanie
+Po wystartowaniu demona docker-compose warto uruchomić:
+
+```docker-compose logs```
+
+i odczekać przed korzystaniem do momentu, gdy wszystkie dane zostaną załadowane do bazy.
+
+### Korzystanie
 
 1. Aplikacja:
    ```telnet localhost 10023```
    (patrz też: dokumentacja w podkatalogu `mud/`)
+   Domyślne dane użytkownika: scott/tiger
 2. Zarządzanie użytkownikami: `https://localhost:10443`
    (należy się spodziewać nieprawidłowego certyfikatu)
+   Domyślne dane administratora: patrz dokumentacja w katalogu `auth/`
 
-## Opis serwisów
+### Opis serwisów
 
 1. Główny serwis - `mud`
    Multi User Dungeon - serwer telnet, który pozwala logującemu się chodzić
