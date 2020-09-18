@@ -80,11 +80,14 @@ class LocationServer:
         return self.session.post(f'{self.url}/auth', json={"user": username, "passwd": passwd}).json()
 
     def call_camel(self, name, what):
-        try:
-            res = self.session.get(f'{self.url}/places/{name}/{what}')
-            return res.json()
-        except Exception as ex:
-            print(f"Communication error: {res}")
+        while True:
+            try:
+                res = self.session.get(f'{self.url}/places/{name}/{what}')
+                return res.json()
+            except Exception as ex:
+                print(f"Communication error: {ex}")
+                print(f"Waiting 5 secs for retry")
+                time.sleep(5)
 
     def get_neighbors(self, location):
         res = self.call_camel(location.loc_id, 'neighbors')
